@@ -1,0 +1,12 @@
+ [
+    {
+        "fullName": "BYBIT-MAIN",
+        "name": "BYBIT",
+        "endPoint": "api.bybit.com"
+    },
+    {
+        "fullName": "BYBIT-TEST",
+        "name": "BYBIT",
+        "endPoint": "api.test.bybit.com"
+    }
+]
