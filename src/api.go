@@ -3,12 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -19,16 +16,12 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/test", TestHandler).Methods("GET")
 	a.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
 	a.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
+	a.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
 	http.Handle("/", a.Router)
 	a.Router.Use(loggingMiddleware)
 }
 
-func (a *App) Run(port uint) {
-	var wait time.Duration
-	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
-	flag.Parse()
-
-	// Add your routes as needed
+func (a *App) Run(port uint) (err error) {
 	if port == 0 {
 		port = 8000
 	}
@@ -43,40 +36,36 @@ func (a *App) Run(port uint) {
 		Handler:      a.Router, // Pass our instance of gorilla/mux in.
 	}
 
-	// Run our server in a goroutine so that it doesn't block.
 	go func() {
-		fmt.Printf("Running server @ %s\n", addr)
-		if err := srv.ListenAndServe(); err != nil {
-			log.Println(err)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen:%+s\n", err)
 		}
 	}()
 
-	c := make(chan os.Signal, 1)
-	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
-	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
-	signal.Notify(c, os.Interrupt)
+	log.Printf("server started at %s\n", addr)
+	<-a.ctx.Done()
+	log.Printf("server stopped\n")
 
-	// Block until we receive our signal.
-	<-c
+	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		cancel()
+	}()
 
-	// Create a deadline to wait for.
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
-	defer cancel()
-	// Doesn't block if no connections, but will otherwise wait
-	// until the timeout deadline.
-	srv.Shutdown(ctx)
-	// Optionally, you could run srv.Shutdown in a goroutine and block on
-	// <-ctx.Done() if your application should wait for other services
-	// to finalize based on context cancellation.
-	log.Println("shutting down")
-	os.Exit(0)
+	if err = srv.Shutdown(ctxShutDown); err != nil {
+		log.Fatalf("server Shutdown Failed:%+s\n", err)
+	}
+
+	log.Printf("server exited properly\n")
+	if err == http.ErrServerClosed {
+		err = nil
+	}
+
+	return
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
 		log.Println(r.RequestURI)
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
 		next.ServeHTTP(w, r)
 	})
 }

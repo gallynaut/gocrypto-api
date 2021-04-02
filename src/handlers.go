@@ -11,6 +11,16 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Test")
 }
+func (a *App) RequestAirdropHandler(w http.ResponseWriter, r *http.Request) {
+	url, err := a.Solana.requestAccountAirdrop(1000000000)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "error getting airdrop: %s", err)
+	}
+	// w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, url)
+}
 
 func (a *App) AddExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	var e Exchange

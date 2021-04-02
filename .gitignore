@@ -1,2 +1,5 @@
 .env
 bin
+config.yml
+*.sql
+vendor

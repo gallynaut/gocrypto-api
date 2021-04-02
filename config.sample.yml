@@ -1,0 +1,11 @@
+db:
+  hostname: "localhost:5432"
+  username: "me"
+  password: "password"
+  dbName: "go_testing"
+api:
+  port: 8000
+solana:
+  network: "Test"
+  privKey: [00 00 00 00 00 ...]
+  accountPollRate: 30
