@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/dfuse-io/solana-go/rpc"
+	"github.com/dfuse-io/solana-go/rpc/ws"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/gorilla/mux"
@@ -63,14 +64,20 @@ func main() {
 	a.InitializeRoutes()
 
 	// setup rpc and web sockets
-	a.Solana.RPC = rpc.NewClient("https://devnet.solana.com")
+	a.Solana.RPC = rpc.NewClient("https://" + config.Solana.Network)
+	a.Solana.WS, err = ws.Dial(context.Background(), "ws://"+config.Solana.Network)
+	if err != nil {
+		log.Fatal("could not start Solana websocket:", err)
+	}
+	defer a.Solana.WS.Close()
 
 	// get public key and request airdrop
 	a.Solana.GetSolanaAccount(config.Solana.PrivateKey)
 	a.Solana.InitializeSolana()
 
 	// poll account balance
-	go a.Solana.pollAccount(config.Solana.AccountPollRate, a.ctx.Done())
+	go a.Solana.pollRPCAccount(config.Solana.AccountPollRate, a.ctx.Done())
+	go a.Solana.subscribeAccount(a.ctx.Done())
 
 	// start api
 	a.Run(config.API.Port)

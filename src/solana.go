@@ -8,6 +8,7 @@ import (
 
 	"github.com/dfuse-io/solana-go"
 	"github.com/dfuse-io/solana-go/rpc"
+	"github.com/dfuse-io/solana-go/rpc/ws"
 
 	"github.com/mr-tron/base58"
 )
@@ -17,6 +18,7 @@ type SolanaApp struct {
 	PublicKey solana.PublicKey
 	RPC       *rpc.Client
 	Balance   *Balance
+	WS        *ws.Client
 }
 
 func (sol *SolanaApp) InitializeSolana() {
@@ -52,7 +54,7 @@ func (sol *SolanaApp) getAccountBalance() {
 		Lamports: (uint64)(acct.Value),
 		Context:  (uint64)(acct.Context.Slot),
 	}
-	fmt.Println(sol.Balance.String())
+	log.Println(sol.Balance.String())
 }
 
 func (sol *SolanaApp) requestAccountAirdrop(lamports uint64) (url string, err error) {
@@ -65,7 +67,7 @@ func (sol *SolanaApp) requestAccountAirdrop(lamports uint64) (url string, err er
 	return url, nil
 }
 
-func (sol *SolanaApp) pollAccount(pollRate uint, done <-chan struct{}) {
+func (sol *SolanaApp) pollRPCAccount(pollRate uint, done <-chan struct{}) {
 	if pollRate == 0 {
 		pollRate = 30
 	}
