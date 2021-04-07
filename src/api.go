@@ -11,17 +11,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (a *App) InitializeRoutes() {
-	a.Router = mux.NewRouter()
-	a.Router.HandleFunc("/test", TestHandler).Methods("GET")
-	a.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
-	a.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
-	a.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
-	http.Handle("/", a.Router)
-	a.Router.Use(loggingMiddleware)
+type APIApp struct {
+	Router *mux.Router
+	Port   uint
 }
 
-func (a *App) Run(port uint) (err error) {
+func (a *App) InitializeRoutes() {
+	a.API.Router = mux.NewRouter()
+	a.API.Router.HandleFunc("/test", TestHandler).Methods("GET")
+	a.API.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
+	a.API.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
+	a.API.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
+	a.API.Router.HandleFunc("/candles/ftx/{symbol}/{resolution}", a.GetSymbolCandlesHandler).Methods("GET").Queries("start", "{start}", "end", "{end}")
+	a.API.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalance).Methods("GET")
+	http.Handle("/", a.API.Router)
+	a.API.Router.Use(loggingMiddleware)
+}
+
+func (api *APIApp) Run(port uint, done <-chan struct{}) (err error) {
 	if port == 0 {
 		port = 8000
 	}
@@ -33,7 +40,7 @@ func (a *App) Run(port uint) (err error) {
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      a.Router, // Pass our instance of gorilla/mux in.
+		Handler:      api.Router, // Pass our instance of gorilla/mux in.
 	}
 
 	go func() {
@@ -43,7 +50,7 @@ func (a *App) Run(port uint) (err error) {
 	}()
 
 	log.Printf("server started at %s\n", addr)
-	<-a.ctx.Done()
+	<-done
 	log.Printf("server stopped\n")
 
 	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)

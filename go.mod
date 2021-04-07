@@ -7,10 +7,14 @@ require (
 	github.com/dfuse-io/binary v0.0.0-20210216024852-4ae6830a495d // indirect
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70 // indirect
 	github.com/dfuse-io/solana-go v0.2.0
+	github.com/dustin/go-humanize v1.0.0
+	github.com/go-numb/go-ftx v0.0.0-20210404151642-7a310724075d
 	github.com/go-pg/pg/v10 v10.8.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.0
+	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/mr-tron/base58 v1.2.0
@@ -19,8 +23,10 @@ require (
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
+	github.com/superoo7/go-gecko v1.0.0
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
 	github.com/tidwall/gjson v1.7.4 // indirect
+	github.com/valyala/fasthttp v1.23.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
@@ -29,7 +35,6 @@ require (
 	golang.org/x/net v0.0.0-20210329181859-df645c7b52b1 // indirect
 	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
 	golang.org/x/term v0.0.0-20210317153231-de623e64d2a6 // indirect
-	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.1.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

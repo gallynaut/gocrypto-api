@@ -6,51 +6,49 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/dfuse-io/solana-go/rpc"
-	"github.com/dfuse-io/solana-go/rpc/ws"
-
 	"github.com/go-pg/pg/v10"
-	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	DB     DBConfig     `json:"db" mapstructure:"db"`
-	API    APIConfig    `json:"api" mapstructure:"api"`
-	Solana SolanaConfig `json:"solana" mapstructure:"solana"`
-}
-type DBConfig struct {
-	Hostname string `json:"hostname" mapstructure:"hostname"`
-	Username string `json:"username" mapstructure:"username"`
-	Password string `json:"password" mapstructure:"password"`
-	DBName   string `json:"dbName" mapstructure:"dbName"`
-}
-type APIConfig struct {
-	Port uint `json:"port" mapstructure:"port"`
-}
-type SolanaConfig struct {
-	PrivateKey      []byte `json:"privKey" mapstructure:"privKey"`
-	Network         string `json:"network" mapstructure:"network"`
-	AccountPollRate uint   `json:"accountPollRate" mapstructure:"accountPollRate"`
+	DB struct {
+		Hostname string `json:"hostname" mapstructure:"hostname"`
+		Username string `json:"username" mapstructure:"username"`
+		Password string `json:"password" mapstructure:"password"`
+		DBName   string `json:"dbName" mapstructure:"dbName"`
+	} `json:"db" mapstructure:"db"`
+	API struct {
+		Port uint `json:"port" mapstructure:"port"`
+	} `json:"api" mapstructure:"api"`
+	Solana struct {
+		PrivateKey      []byte `json:"privKey" mapstructure:"privKey"`
+		Network         string `json:"network" mapstructure:"network"`
+		AccountPollRate uint   `json:"accountPollRate" mapstructure:"accountPollRate"`
+	} `json:"solana" mapstructure:"solana"`
+	FTX struct {
+		ApiKey string `json:"apiKey" mapstructure:"apiKey"`
+		Secret string `json:"secret" mapstructure:"secret"`
+	} `json:"ftx" mapstructure:"ftx"`
 }
 type App struct {
-	Router *mux.Router
+	API    APIApp
 	DB     *pg.DB
 	Solana SolanaApp
+	FTX    FTXApp
+	Gecko  GeckoApp
 	ctx    context.Context
-	done   chan os.Signal
 }
 
 func main() {
 	a := App{}
-	a.done = make(chan os.Signal, 1)
-	signal.Notify(a.done, os.Interrupt)
 
 	var cancel context.CancelFunc
 	a.ctx, cancel = context.WithCancel(context.Background())
 
 	go func() {
-		oscall := <-a.done
+		done := make(chan os.Signal, 1)
+		signal.Notify(done, os.Interrupt)
+		oscall := <-done
 		log.Printf("system call:%+v", oscall)
 		cancel()
 	}()
@@ -60,27 +58,28 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
+	// database and api routes
 	a.InitializeDB(config.DB.Hostname, config.DB.Username, config.DB.Password, config.DB.DBName)
 	a.InitializeRoutes()
 
-	// setup rpc and web sockets
-	a.Solana.RPC = rpc.NewClient("https://" + config.Solana.Network)
-	a.Solana.WS, err = ws.Dial(context.Background(), "ws://"+config.Solana.Network)
-	if err != nil {
-		log.Fatal("could not start Solana websocket:", err)
-	}
+	a.Gecko.initializeGecko()
+
+	// solana keys, rpc, and websocket
+	a.Solana.InitializeSolana(config.Solana.Network)
+	a.Solana.GetSolanaAccount(config.Solana.PrivateKey)
 	defer a.Solana.WS.Close()
 
-	// get public key and request airdrop
-	a.Solana.GetSolanaAccount(config.Solana.PrivateKey)
-	a.Solana.InitializeSolana()
+	// connect ftx account
+	a.FTX.initializeFTX(config.FTX.ApiKey, config.FTX.Secret)
 
-	// poll account balance
-	go a.Solana.pollRPCAccount(config.Solana.AccountPollRate, a.ctx.Done())
+	// poll solana account balances and wait for blocks
 	go a.Solana.subscribeAccount(a.ctx.Done())
 
+	// poll FTX funding rates
+	go a.FTX.pollFundingRates(45, a.ctx.Done())
+
 	// start api
-	a.Run(config.API.Port)
+	a.API.Run(config.API.Port, a.ctx.Done())
 
 	log.Println("shutting down")
 	os.Exit(0)

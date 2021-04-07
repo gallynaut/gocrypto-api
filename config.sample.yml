@@ -6,6 +6,9 @@ db:
 api:
   port: 8000
 solana:
-  network: "Test"
+  network: "devnet"
   privKey: [00 00 00 00 00 ...]
   accountPollRate: 30
+ftx:
+  apiKey: "XXXXXXXXXXXXXXXXXXXXXX"
+  secret: "XXXXXXXXXXXXXXXXXXXXXX"

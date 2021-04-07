@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func TestHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,4 +50,42 @@ func (a *App) GetExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(Exchanges)
 
 	respondWithJSON(w, http.StatusOK, Exchanges)
+}
+
+func (a *App) GetSymbolCandlesHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	symbol := params["symbol"]
+	resolution, err := strconv.Atoi(params["resolution"])
+	if err != nil {
+		respondWithJSON(w, http.StatusNotFound, "resolution not found")
+	}
+	start, err := strconv.ParseInt(params["start"], 10, 64)
+	if err != nil {
+		respondWithJSON(w, http.StatusNotFound, "start not found")
+	}
+	end, err := strconv.ParseInt(params["end"], 10, 64)
+	if err != nil {
+		respondWithJSON(w, http.StatusNotFound, "end not found")
+	}
+	fmt.Printf("GET params were: %s\nsymbol: %s\nresolution: %d\n", r.URL.Query(), symbol, resolution)
+	err = a.FTX.getCandles(symbol, resolution, start, end)
+	if err != nil {
+		respondWithJSON(w, http.StatusNotFound, "candles not found")
+	}
+
+	// Exchanges, err := getExchanges(a.DB)
+	// if err != nil {
+	// 	fmt.Println("error getting exchanges: ", err)
+	// }
+	// log.Println(Exchanges)
+
+	respondWithJSON(w, http.StatusOK, params)
+}
+
+func (a *App) GetSolanaAccountBalance(w http.ResponseWriter, r *http.Request) {
+	b, err := a.Solana.getAccountBalance()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting acct balance: %s", err))
+	}
+	respondWithJSON(w, http.StatusOK, b)
 }
