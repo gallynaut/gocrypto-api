@@ -12,3 +12,5 @@ solana:
 ftx:
   apiKey: "XXXXXXXXXXXXXXXXXXXXXX"
   secret: "XXXXXXXXXXXXXXXXXXXXXX"
+nomics:
+  apiKey: "XXXXXXXXXXXXXXXXXx"

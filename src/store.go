@@ -8,9 +8,13 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 )
 
+type StoreApp struct {
+	DB *pg.DB
+}
+
 func (a *App) InitializeDB(hostname, user, password, dbName string) {
 
-	a.DB = pg.Connect(&pg.Options{
+	a.Store.DB = pg.Connect(&pg.Options{
 		Addr:     hostname,
 		User:     user,
 		Password: password,
@@ -19,16 +23,15 @@ func (a *App) InitializeDB(hostname, user, password, dbName string) {
 	models := []interface{}{
 		(*Exchange)(nil),
 	}
-	log.Println("creating DB schemas")
+	log.Println("STORE: creating DB schemas")
 
 	for _, model := range models {
-		err := a.DB.Model(model).CreateTable(&orm.CreateTableOptions{
+		err := a.Store.DB.Model(model).CreateTable(&orm.CreateTableOptions{
 			IfNotExists: true,
 		})
 		if err != nil {
-			fmt.Println("error creating table: ", err)
+			fmt.Println("STORE: error creating table: ", err)
 			panic(err)
 		}
 	}
-
 }

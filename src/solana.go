@@ -16,9 +16,9 @@ type SolanaApp struct {
 	Account   *solana.Account
 	PublicKey solana.PublicKey
 	RPC       *rpc.Client
+	WS        *ws.Client
 	Balance   *solBalance
 	Network   *solNetwork
-	WS        *ws.Client
 }
 type solNetwork struct {
 	URL    string
@@ -51,13 +51,9 @@ func (sol *SolanaApp) InitializeSolana(network string) {
 	sol.RPC = rpc.NewClient("https://" + sol.Network.URL)
 	sol.WS, err = ws.Dial(context.Background(), "ws://"+sol.Network.URL)
 	if err != nil {
-		log.Fatal("could not start Solana websocket:", err)
+		log.Fatal("SOL: could not start Solana websocket:", err)
 	}
 
-	// _, err = sol.requestAccountAirdrop(1000000000)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
 }
 
 func (sol *SolanaApp) GetSolanaAccount(privkey []byte) {
@@ -71,7 +67,7 @@ func (sol *SolanaApp) GetSolanaAccount(privkey []byte) {
 
 	sol.PublicKey = sol.Account.PublicKey()
 
-	log.Printf("pubkey: https://explorer.solana.com/address/%s?cluster=%s\n", sol.PublicKey, sol.Network.Prefix)
+	log.Printf("SOL: pubkey: https://explorer.solana.com/address/%s?cluster=%s\n", sol.PublicKey, sol.Network.Prefix)
 
 }
 
@@ -80,27 +76,27 @@ func (sol *SolanaApp) subscribeAccount(done <-chan struct{}) error {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("subscribed to account")
+	log.Println("SOL: subscribed to account")
 
 	for {
 		select {
 		case <-done:
-			log.Println("unsubscribing account")
+			log.Println("SOL: unsubscribing account")
 			s.Unsubscribe()
 			return nil
 		default:
-			message, err := s.Recv()
+			_, err := s.Recv()
 			if err != nil {
-				fmt.Println(" error receiving subscription message: ", err)
+				fmt.Println("SOL: error receiving subscription message: ", err)
 			}
-			acctResult, ok := message.(*ws.AccountResult)
-			if !ok {
-				log.Printf("error decoding msg: %+v\n", message)
-			}
-			log.Printf("msg received: %+v\n", *acctResult)
+			// acctResult, ok := message.(*ws.AccountResult)
+			// if !ok {
+			// 	log.Printf("error decoding msg: %+v\n", message)
+			// }
+			// log.Printf("msg received: %+v\n", *acctResult)
 
 			// unmarshalling message not working so using channel as a trigger
-			// sol.getAccountBalance()
+			go sol.getAccountBalance()
 		}
 	}
 }
@@ -125,7 +121,7 @@ func (sol *SolanaApp) requestAccountAirdrop(lamports uint64) (url string, err er
 		return "", fmt.Errorf("error getting airdrop: %e", err)
 	}
 	url = fmt.Sprintf("https://explorer.solana.com/tx/%s?cluster=devnet", airdrop)
-	fmt.Println("requested airdrop: ", url)
+	log.Println("SOL: requested airdrop: ", url)
 	return url, nil
 }
 

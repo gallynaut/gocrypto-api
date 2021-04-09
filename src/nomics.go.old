@@ -1,0 +1,86 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	gonomics "github.com/milkywaybrain/gonomics"
+)
+
+type NomicsApp struct {
+	Client *gonomics.Connecter
+}
+
+func (n *NomicsApp) initializeNomics(apiKey string) {
+	n.Client = gonomics.New(apiKey)
+	log.Println("NOM: initialized")
+}
+
+func (n *NomicsApp) Run(pollRate uint, done <-chan struct{}) {
+	if pollRate == 0 {
+		pollRate = 30
+	}
+	log.Printf("NOM: polling sparkline every %d seconds\n", pollRate)
+	go func(t *time.Ticker) {
+		for {
+			select {
+			case <-done:
+				log.Println("NOM: polling candles stopped")
+				t.Stop()
+				return
+			case <-t.C:
+				go n.getSparkline([]string{"SOL"})
+			}
+		}
+	}(time.NewTicker(time.Duration(pollRate) * time.Second))
+}
+
+// Need special API key
+// func (n *NomicsApp) getCandles(symbol string) {
+// 	symRequest := &gonomics.CandlesRequest{
+// 		Interval: "1d",
+// 		Currency: symbol,
+// 		Start:    time.Now().AddDate(-1, 0, 0),
+// 		End:      time.Now(),
+// 	}
+// 	symResponse, err := n.Client.GetCandles(*symRequest)
+// 	if err != nil {
+// 		log.Printf("NOM: error getting candles: %s, %+v", err, symRequest)
+// 	}
+// 	for i, v := range symResponse {
+// 		fmt.Printf("#%3d %+v", i, v)
+// 	}
+// }
+
+func (n *NomicsApp) getTicker(symbols []string) {
+	symRequest := &gonomics.CurrenciesTickerRequest{
+		Ids:      symbols,
+		Interval: []string{"1d", "7d", "1M"},
+		Convert:  "USD",
+	}
+	symResponse, err := n.Client.GetCurrenciesTicker(*symRequest)
+	if err != nil {
+		log.Printf("NOM: error getting ticker: %s, %+v", err, symRequest)
+	}
+	log.Printf("NOM: %s - %+v\n", symbols, symResponse)
+}
+func (n *NomicsApp) getSparkline(symbols []string) {
+	startTime, _ := time.Parse(time.RFC3339, "2020-02-16T00:00:00Z")
+	endTime, _ := time.Parse(time.RFC3339, "2021-04-07T00:00:00Z")
+	csReq := gonomics.CurrenciesSparklineRequest{
+		Ids:     symbols,
+		Start:   startTime,
+		End:     endTime,
+		Convert: "USD",
+	}
+	csResp, err := n.Client.GetCurrenciesSparkline(csReq)
+	if err != nil {
+		log.Printf("Error getting currencies sparkline: %v", err)
+	}
+	for _, cs := range csResp {
+		for i, _ := range cs.Timestamps {
+			fmt.Printf("NOM: %d, %s - %f\n", i, cs.Timestamps[i], cs.Prices[i])
+		}
+	}
+}

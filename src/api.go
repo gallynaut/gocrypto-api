@@ -16,6 +16,7 @@ type APIApp struct {
 	Port   uint
 }
 
+// mostly used for debugging right now
 func (a *App) InitializeRoutes() {
 	a.API.Router = mux.NewRouter()
 	a.API.Router.HandleFunc("/test", TestHandler).Methods("GET")
@@ -23,7 +24,10 @@ func (a *App) InitializeRoutes() {
 	a.API.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
 	a.API.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
 	a.API.Router.HandleFunc("/candles/ftx/{symbol}/{resolution}", a.GetSymbolCandlesHandler).Methods("GET").Queries("start", "{start}", "end", "{end}")
-	a.API.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalance).Methods("GET")
+	a.API.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalanceHandler).Methods("GET")
+	a.API.Router.HandleFunc("/gecko/{symbol}", a.GetSymbolHandler).Methods("GET")
+	a.API.Router.HandleFunc("/gecko/coin/{symbol}", a.GetCoinHandler).Methods("GET")
+	a.API.Router.HandleFunc("/gecko/{symbol}/price", a.GetSymbolPriceHandler).Methods("GET")
 	http.Handle("/", a.API.Router)
 	a.API.Router.Use(loggingMiddleware)
 }
@@ -49,9 +53,9 @@ func (api *APIApp) Run(port uint, done <-chan struct{}) (err error) {
 		}
 	}()
 
-	log.Printf("server started at %s\n", addr)
+	log.Printf("API: server started at %s\n", addr)
 	<-done
-	log.Printf("server stopped\n")
+	log.Printf("API: server stopped\n")
 
 	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
@@ -59,10 +63,10 @@ func (api *APIApp) Run(port uint, done <-chan struct{}) (err error) {
 	}()
 
 	if err = srv.Shutdown(ctxShutDown); err != nil {
-		log.Fatalf("server Shutdown Failed:%+s\n", err)
+		log.Fatalf("API: server Shutdown Failed:%+s\n", err)
 	}
 
-	log.Printf("server exited properly\n")
+	log.Printf("API: server exited properly\n")
 	if err == http.ErrServerClosed {
 		err = nil
 	}

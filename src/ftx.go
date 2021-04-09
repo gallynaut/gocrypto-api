@@ -26,19 +26,19 @@ func (ftx *FTXApp) initializeFTX(apiKey, secret string) {
 
 	err := ftx.getAccountInformation()
 	if err != nil {
-		log.Fatal("error getting account information: ", err)
+		log.Fatal("FTX: error getting account information: ", err)
 	}
 
 	// go ftx.getCandles("SOL-PERP", 1586143817, 1617679817)
 }
 
 func (ftx *FTXApp) pollFundingRates(pollRate uint64, done <-chan struct{}) {
-	log.Printf("polling funding rates every %d seconds\n", pollRate)
+	log.Printf("FTX: polling funding rates every %d seconds\n", pollRate)
 	go func(t *time.Ticker) {
 		for {
 			select {
 			case <-done:
-				log.Printf("funding polling stopped\n")
+				log.Printf("FTX: funding polling stopped\n")
 				t.Stop()
 				return
 			case <-t.C:
@@ -55,14 +55,17 @@ func (ftx *FTXApp) getFundingRates() error {
 	if err != nil {
 		return err
 	}
-	// Sort by FundingRate & Print
-	// Custom sort
 
+	lastHour := time.Now().UTC().Truncate(time.Hour)
 	sort.Sort(sort.Reverse(rates))
-	fmt.Println("===== Funding Rates =====")
-	for i, v := range *rates {
-		if i < 10 {
-			fmt.Printf("%f			%s		%s\n", (v.Rate * 100.0), v.Future, v.Time.String())
+	fmt.Println("FTX: ===== Funding Rates =====")
+	counter := 0
+	for _, v := range *rates {
+		if counter < 10 {
+			if v.Time.Equal(lastHour) {
+				fmt.Printf("#%02d - %06f\t%s\n", counter+1, (v.Rate * 100.0), v.Future)
+				counter += 1
+			}
 		} else {
 			break
 		}
@@ -76,7 +79,7 @@ func (ftx *FTXApp) getAccountInformation() error {
 		return err
 	}
 
-	fmt.Printf("account info fetched %s\n", info.Username)
+	log.Printf("FTX: account info fetched %s\n", info.Username)
 	return nil
 }
 func (ftx *FTXApp) getMarket(mkt string) error {

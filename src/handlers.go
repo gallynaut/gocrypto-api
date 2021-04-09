@@ -34,7 +34,7 @@ func (a *App) AddExchangeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if err := e.addExchange(a.DB); err != nil {
+	if err := e.addExchange(a.Store.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -43,7 +43,7 @@ func (a *App) AddExchangeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) GetExchangeHandler(w http.ResponseWriter, r *http.Request) {
-	Exchanges, err := getExchanges(a.DB)
+	Exchanges, err := getExchanges(a.Store.DB)
 	if err != nil {
 		fmt.Println("error getting exchanges: ", err)
 	}
@@ -82,10 +82,39 @@ func (a *App) GetSymbolCandlesHandler(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, params)
 }
 
-func (a *App) GetSolanaAccountBalance(w http.ResponseWriter, r *http.Request) {
+func (a *App) GetSolanaAccountBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	b, err := a.Solana.getAccountBalance()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting acct balance: %s", err))
 	}
 	respondWithJSON(w, http.StatusOK, b)
+}
+
+func (a *App) GetSymbolHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	symbol := params["symbol"]
+	p, err := a.Gecko.getSymbol(symbol)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting symbol %s: %s", symbol, err))
+	}
+	respondWithJSON(w, http.StatusOK, p)
+}
+
+func (a *App) GetSymbolPriceHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	symbol := params["symbol"]
+	p, err := a.Gecko.getSymbolPrice(symbol)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting symbol %s: %s", symbol, err))
+	}
+	respondWithJSON(w, http.StatusOK, p)
+}
+func (a *App) GetCoinHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	symbol := params["symbol"]
+	coin, err := a.Gecko.getCoin(symbol)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting symbol %s: %s", symbol, err))
+	}
+	respondWithJSON(w, http.StatusOK, coin)
 }

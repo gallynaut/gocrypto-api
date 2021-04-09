@@ -3,6 +3,7 @@ module github.com/gallynaut/gocrypto-api
 go 1.16
 
 require (
+	code.cryptowat.ch/cw-sdk-go v1.0.2
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.5 // indirect
 	github.com/dfuse-io/binary v0.0.0-20210216024852-4ae6830a495d // indirect
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70 // indirect
@@ -16,6 +17,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/milkywaybrain/gonomics v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pelletier/go-toml v1.8.1 // indirect

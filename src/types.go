@@ -7,6 +7,24 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
+type Symbol struct {
+	ID          string  `json:"id" pg:"id,pk"`
+	Symbol      string  `json:"symbol" pg:"symbol"`
+	Name        string  `json:"name" pg:"name"`
+	TotalSupply float64 `json:"total_supply" pg:"total_supply"`
+	LastUpdated string  `json:"last_updated" pg:"last_updated"`
+}
+
+type Candles struct {
+	ID       string `json:"id" pg:"id,pk"`
+	Symbol   string `json:"symbol" pg:"symbol"`
+	Exchange string `json:"exchange" pg:"exchange"`
+	Period   string `json:"name" pg:"name"`
+
+	TotalSupply float64 `json:"total_supply" pg:"total_supply"`
+	LastUpdated string  `json:"last_updated" pg:"last_updated"`
+}
+
 type Exchange struct {
 	FullName     string `pg:"full_name,pk" json:"fullName"`      //Name + Network (i.e. BYBIT-MAIN)
 	ExchangeName string `pg:"exchange_name,notnull" json:"name"` //BYBIT

@@ -17,24 +17,49 @@ func (g *GeckoApp) initializeGecko() {
 	// 	Timeout: time.Second * 10,
 	// }
 	g.Client = coingecko.NewClient(nil)
-	log.Println("connected to coingecko")
-	go g.getSolanPrice()
+	log.Println("GEK: connected")
+
+	// fetch and store in DB top 200 markets by name, symbol, marketcap
+	// poll every hour and post to DB
+	// compare changes
 
 }
 
-func (g *GeckoApp) getSolanPrice() {
-	vsCurrency := "usd"
-	ids := []string{"solana"}
-	perPage := 1
-	page := 1
-	sparkline := true
+// func (g *GeckoApp) getSymbol(symbol string) (*geckoTypes.CoinsMarketItem, error) {
+
+// }
+
+func (g *GeckoApp) getSymbol(symbol string) (*geckoTypes.CoinsMarketItem, error) {
 	pcp := geckoTypes.PriceChangePercentageObject
 	priceChangePercentage := []string{pcp.PCP1h, pcp.PCP24h, pcp.PCP7d, pcp.PCP14d, pcp.PCP30d, pcp.PCP200d, pcp.PCP1y}
-	order := geckoTypes.OrderTypeObject.MarketCapDesc
-	market, err := g.Client.CoinsMarket(vsCurrency, ids, order, perPage, page, sparkline, priceChangePercentage)
+	market, err := g.Client.CoinsMarket("usd", []string{symbol},
+		geckoTypes.OrderTypeObject.MarketCapDesc, 1, 1, true, priceChangePercentage)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("GEK: err fetching symbol prie: ", err)
+		return nil, err
 	}
-	fmt.Println("Total coins: ", len(*market))
-	fmt.Println(*market)
+	for i, v := range *market {
+		if i == 0 {
+			// log.Printf("GECKO\t%s: %+v", symbol, v)
+			return &v, nil
+		}
+	}
+	return nil, fmt.Errorf("empty list returned")
+}
+
+func (g *GeckoApp) getSymbolPrice(symbol string) (float64, error) {
+	market, err := g.getSymbol(symbol)
+	if err != nil {
+		return 0.0, err
+	}
+	return market.CurrentPrice, nil
+}
+
+func (g *GeckoApp) getCoin(symbol string) (*geckoTypes.CoinsID, error) {
+	coin, err := g.Client.CoinsID(symbol, false, true, false, true, true, false)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("coinID: %+v", *coin)
+	return coin, nil
 }

@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/spf13/viper"
 )
 
@@ -29,13 +28,18 @@ type Config struct {
 		ApiKey string `json:"apiKey" mapstructure:"apiKey"`
 		Secret string `json:"secret" mapstructure:"secret"`
 	} `json:"ftx" mapstructure:"ftx"`
+	CW struct {
+		PublicKey string `json:"pubKey" mapstructure:"pubKey"`
+		Secret    string `json:"secret" mapstructure:"secret"`
+	} `json:"cryptoWatch" mapstructure:"cryptoWatch"`
 }
 type App struct {
 	API    APIApp
-	DB     *pg.DB
+	Store  StoreApp
 	Solana SolanaApp
 	FTX    FTXApp
 	Gecko  GeckoApp
+	CW     CWApp
 	ctx    context.Context
 }
 
@@ -61,13 +65,16 @@ func main() {
 	// database and api routes
 	a.InitializeDB(config.DB.Hostname, config.DB.Username, config.DB.Password, config.DB.DBName)
 	a.InitializeRoutes()
+	a.CW.initializeCW(config.CW.PublicKey)
 
 	a.Gecko.initializeGecko()
+	// a.CW.initializeCW(config.CW.ApiKey, config.CW.Secret)
 
 	// solana keys, rpc, and websocket
 	a.Solana.InitializeSolana(config.Solana.Network)
 	a.Solana.GetSolanaAccount(config.Solana.PrivateKey)
 	defer a.Solana.WS.Close()
+	go a.Solana.requestAccountAirdrop(1000000000)
 
 	// connect ftx account
 	a.FTX.initializeFTX(config.FTX.ApiKey, config.FTX.Secret)
