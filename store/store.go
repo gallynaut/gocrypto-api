@@ -1,4 +1,4 @@
-package main
+package store
 
 import (
 	"fmt"
@@ -12,9 +12,9 @@ type StoreApp struct {
 	DB *pg.DB
 }
 
-func (a *App) InitializeDB(hostname, user, password, dbName string) {
-
-	a.Store.DB = pg.Connect(&pg.Options{
+func InitializeDB(hostname, user, password, dbName string) StoreApp {
+	var s StoreApp
+	s.DB = pg.Connect(&pg.Options{
 		Addr:     hostname,
 		User:     user,
 		Password: password,
@@ -26,7 +26,7 @@ func (a *App) InitializeDB(hostname, user, password, dbName string) {
 	log.Println("STORE: creating DB schemas")
 
 	for _, model := range models {
-		err := a.Store.DB.Model(model).CreateTable(&orm.CreateTableOptions{
+		err := s.DB.Model(model).CreateTable(&orm.CreateTableOptions{
 			IfNotExists: true,
 		})
 		if err != nil {
@@ -34,4 +34,5 @@ func (a *App) InitializeDB(hostname, user, password, dbName string) {
 			panic(err)
 		}
 	}
+	return s
 }

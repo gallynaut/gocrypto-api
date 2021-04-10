@@ -6,10 +6,11 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/gallynaut/gocrypto-api/store"
 	"github.com/spf13/viper"
 )
 
-type Config struct {
+type appConfig struct {
 	DB struct {
 		Hostname string `json:"hostname" mapstructure:"hostname"`
 		Username string `json:"username" mapstructure:"username"`
@@ -33,9 +34,10 @@ type Config struct {
 		Secret    string `json:"secret" mapstructure:"secret"`
 	} `json:"cryptoWatch" mapstructure:"cryptoWatch"`
 }
+
 type App struct {
 	API    APIApp
-	Store  StoreApp
+	Store  store.StoreApp
 	Solana SolanaApp
 	FTX    FTXApp
 	Gecko  GeckoApp
@@ -57,27 +59,14 @@ func main() {
 		cancel()
 	}()
 
-	config, err := LoadConfig("config.yml")
+	config, err := loadConfig("config.yml")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
-
-	// database and api routes
-	a.InitializeDB(config.DB.Hostname, config.DB.Username, config.DB.Password, config.DB.DBName)
-	a.InitializeRoutes()
-	a.CW.initializeCW(config.CW.PublicKey)
-
-	a.Gecko.initializeGecko()
-	// a.CW.initializeCW(config.CW.ApiKey, config.CW.Secret)
-
-	// solana keys, rpc, and websocket
-	a.Solana.InitializeSolana(config.Solana.Network)
-	a.Solana.GetSolanaAccount(config.Solana.PrivateKey)
+	a.initialize(config)
 	defer a.Solana.WS.Close()
-	go a.Solana.requestAccountAirdrop(1000000000)
 
-	// connect ftx account
-	a.FTX.initializeFTX(config.FTX.ApiKey, config.FTX.Secret)
+	go a.Solana.requestAccountAirdrop(1000000000)
 
 	// poll solana account balances and wait for blocks
 	go a.Solana.subscribeAccount(a.ctx.Done())
@@ -93,7 +82,7 @@ func main() {
 
 }
 
-func LoadConfig(path string) (config Config, err error) {
+func loadConfig(path string) (config appConfig, err error) {
 	viper.SetConfigFile(path)
 	// viper.AutomaticEnv()
 
@@ -104,4 +93,18 @@ func LoadConfig(path string) (config Config, err error) {
 
 	err = viper.Unmarshal(&config)
 	return
+}
+
+func (a *App) initialize(config appConfig) {
+	// database and api routes
+	a.Store = store.InitializeDB(config.DB.Hostname, config.DB.Username, config.DB.Password, config.DB.DBName)
+	a.initializeRoutes()
+
+	// intitialize data feeds
+	a.initializeCW(config.CW.PublicKey)
+	a.initializeGecko()
+	a.initializeFTX(config.FTX.ApiKey, config.FTX.Secret)
+
+	// solana keys, rpc, and websocket
+	a.initializeSolana(config.Solana.Network, config.Solana.PrivateKey)
 }

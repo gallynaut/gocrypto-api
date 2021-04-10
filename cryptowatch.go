@@ -11,9 +11,11 @@ type CWApp struct {
 	Client *cwRest.CWRESTClient
 }
 
-func (cw *CWApp) initializeCW(apiKey string) {
-	cw.Client = cwRest.NewCWRESTClient(nil)
+func (a *App) initializeCW(apiKey string) {
+	a.CW.Client = cwRest.NewCWRESTClient(nil)
 	log.Println("CW: initialized")
+
+	// add routes for cryptowatch here
 }
 func (cw *CWApp) Run(pollRate uint, done <-chan struct{}) {
 	if pollRate == 0 {
@@ -35,5 +37,5 @@ func (cw *CWApp) Run(pollRate uint, done <-chan struct{}) {
 }
 
 func (cw *CWApp) getCandles(symbols []string) {
-
+	// resp, err := cw.Client.GetOHLC()
 }

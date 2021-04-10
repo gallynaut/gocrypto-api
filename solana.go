@@ -20,6 +20,7 @@ type SolanaApp struct {
 	Balance   *solBalance
 	Network   *solNetwork
 }
+
 type solNetwork struct {
 	URL    string
 	Prefix string
@@ -29,45 +30,42 @@ type solBalance struct {
 	Context  uint64
 }
 
-func (sol *SolanaApp) InitializeSolana(network string) {
+func (a *App) initializeSolana(network string, privkey []byte) {
 	if network == "mainnet" {
-		sol.Network = &solNetwork{
+		a.Solana.Network = &solNetwork{
 			URL:    "api.mainnet-beta.solana.com",
 			Prefix: network,
 		}
 	} else if network == "testnet" {
-		sol.Network = &solNetwork{
+		a.Solana.Network = &solNetwork{
 			URL:    "testnet.solana.com",
 			Prefix: network,
 		}
 	} else {
-		sol.Network = &solNetwork{
+		a.Solana.Network = &solNetwork{
 			URL:    "devnet.solana.com",
 			Prefix: network,
 		}
 	}
 	var err error
 	// setup rpc and web sockets
-	sol.RPC = rpc.NewClient("https://" + sol.Network.URL)
-	sol.WS, err = ws.Dial(context.Background(), "ws://"+sol.Network.URL)
+	a.Solana.RPC = rpc.NewClient("https://" + a.Solana.Network.URL)
+	a.Solana.WS, err = ws.Dial(context.Background(), "ws://"+a.Solana.Network.URL)
 	if err != nil {
 		log.Fatal("SOL: could not start Solana websocket:", err)
 	}
 
-}
-
-func (sol *SolanaApp) GetSolanaAccount(privkey []byte) {
+	// get solana account from private key
 	var privkeyStr string = base58.Encode(privkey)
-	var err error
 
-	sol.Account, err = solana.AccountFromPrivateKeyBase58(privkeyStr)
+	a.Solana.Account, err = solana.AccountFromPrivateKeyBase58(privkeyStr)
 	if err != nil {
 		fmt.Println("error generating key: ", err)
 	}
 
-	sol.PublicKey = sol.Account.PublicKey()
+	a.Solana.PublicKey = a.Solana.Account.PublicKey()
 
-	log.Printf("SOL: pubkey: https://explorer.solana.com/address/%s?cluster=%s\n", sol.PublicKey, sol.Network.Prefix)
+	log.Printf("SOL: pubkey: https://explorer.solana.com/address/%s?cluster=%s\n", a.Solana.PublicKey, a.Solana.Network.Prefix)
 
 }
 

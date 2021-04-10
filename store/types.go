@@ -1,10 +1,7 @@
-package main
+package store
 
 import (
 	"fmt"
-	"log"
-
-	"github.com/go-pg/pg/v10"
 )
 
 type Symbol struct {
@@ -14,7 +11,6 @@ type Symbol struct {
 	TotalSupply float64 `json:"total_supply" pg:"total_supply"`
 	LastUpdated string  `json:"last_updated" pg:"last_updated"`
 }
-
 type Candles struct {
 	ID       string `json:"id" pg:"id,pk"`
 	Symbol   string `json:"symbol" pg:"symbol"`
@@ -35,18 +31,18 @@ func (e Exchange) String() string {
 	return fmt.Sprintf("%s @ %s", e.FullName, e.EndPoint)
 }
 
-func getExchanges(db *pg.DB) (fetchedExchanges []Exchange, err error) {
-	err = db.Model(&fetchedExchanges).Select()
-	if err != nil {
-		log.Println("error fetching exchanges", err)
-	}
-	return fetchedExchanges, err
-}
+// func getExchanges(db *pg.DB) (fetchedExchanges []Exchange, err error) {
+// 	err = db.Model(&fetchedExchanges).Select()
+// 	if err != nil {
+// 		log.Println("error fetching exchanges", err)
+// 	}
+// 	return fetchedExchanges, err
+// }
 
-func (e *Exchange) addExchange(db *pg.DB) (err error) {
-	_, err = db.Model(e).Insert()
-	if err != nil {
-		panic(err)
-	}
-	return
-}
+// func (e *Exchange) addExchange(db *pg.DB) (err error) {
+// 	_, err = db.Model(e).Insert()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return
+// }

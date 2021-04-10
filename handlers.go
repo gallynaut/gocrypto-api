@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,32 +24,32 @@ func (a *App) RequestAirdropHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, url)
 }
 
-func (a *App) AddExchangeHandler(w http.ResponseWriter, r *http.Request) {
-	var e Exchange
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	defer r.Body.Close()
+// func (a *App) AddExchangeHandler(w http.ResponseWriter, r *http.Request) {
+// 	var e store.Exchange
+// 	decoder := json.NewDecoder(r.Body)
+// 	if err := decoder.Decode(&e); err != nil {
+// 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+// 		return
+// 	}
+// 	defer r.Body.Close()
 
-	if err := e.addExchange(a.Store.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+// 	if err := e.addExchange(a.Store.DB); err != nil {
+// 		respondWithError(w, http.StatusInternalServerError, err.Error())
+// 		return
+// 	}
 
-	respondWithJSON(w, http.StatusCreated, e)
-}
+// 	respondWithJSON(w, http.StatusCreated, e)
+// }
 
-func (a *App) GetExchangeHandler(w http.ResponseWriter, r *http.Request) {
-	Exchanges, err := getExchanges(a.Store.DB)
-	if err != nil {
-		fmt.Println("error getting exchanges: ", err)
-	}
-	log.Println(Exchanges)
+// func (a *App) GetExchangeHandler(w http.ResponseWriter, r *http.Request) {
+// 	Exchanges, err := getExchanges(a.Store.DB)
+// 	if err != nil {
+// 		fmt.Println("error getting exchanges: ", err)
+// 	}
+// 	log.Println(Exchanges)
 
-	respondWithJSON(w, http.StatusOK, Exchanges)
-}
+// 	respondWithJSON(w, http.StatusOK, Exchanges)
+// }
 
 func (a *App) GetSymbolCandlesHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -90,29 +89,29 @@ func (a *App) GetSolanaAccountBalanceHandler(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusOK, b)
 }
 
-func (a *App) GetSymbolHandler(w http.ResponseWriter, r *http.Request) {
+func (g *GeckoApp) GetSymbolHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	symbol := params["symbol"]
-	p, err := a.Gecko.getSymbol(symbol)
+	p, err := g.getSymbol(symbol)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting symbol %s: %s", symbol, err))
 	}
 	respondWithJSON(w, http.StatusOK, p)
 }
 
-func (a *App) GetSymbolPriceHandler(w http.ResponseWriter, r *http.Request) {
+func (g *GeckoApp) GetSymbolPriceHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	symbol := params["symbol"]
-	p, err := a.Gecko.getSymbolPrice(symbol)
+	p, err := g.getSymbolPrice(symbol)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting symbol %s: %s", symbol, err))
 	}
 	respondWithJSON(w, http.StatusOK, p)
 }
-func (a *App) GetCoinHandler(w http.ResponseWriter, r *http.Request) {
+func (g *GeckoApp) GetCoinHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	symbol := params["symbol"]
-	coin, err := a.Gecko.getCoin(symbol)
+	coin, err := g.getCoin(symbol)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting symbol %s: %s", symbol, err))
 	}

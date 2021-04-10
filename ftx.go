@@ -20,16 +20,16 @@ type FTXApp struct {
 	Client *rest.Client
 }
 
-func (ftx *FTXApp) initializeFTX(apiKey, secret string) {
+func (a *App) initializeFTX(apiKey, secret string) {
 	// Only main account
-	ftx.Client = rest.New(auth.New(apiKey, secret))
+	a.FTX.Client = rest.New(auth.New(apiKey, secret))
 
-	err := ftx.getAccountInformation()
+	err := a.FTX.getAccountInformation()
 	if err != nil {
 		log.Fatal("FTX: error getting account information: ", err)
 	}
 
-	// go ftx.getCandles("SOL-PERP", 1586143817, 1617679817)
+	// add routes for FTX here
 }
 
 func (ftx *FTXApp) pollFundingRates(pollRate uint64, done <-chan struct{}) {

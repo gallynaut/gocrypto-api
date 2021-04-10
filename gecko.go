@@ -12,22 +12,15 @@ type GeckoApp struct {
 	Client *coingecko.Client
 }
 
-func (g *GeckoApp) initializeGecko() {
-	// httpClient := &http.Client{
-	// 	Timeout: time.Second * 10,
-	// }
-	g.Client = coingecko.NewClient(nil)
+func (a *App) initializeGecko() {
+	a.Gecko.Client = coingecko.NewClient(nil)
 	log.Println("GEK: connected")
 
-	// fetch and store in DB top 200 markets by name, symbol, marketcap
-	// poll every hour and post to DB
-	// compare changes
+	a.API.Router.HandleFunc("/gecko/{symbol}", a.Gecko.GetSymbolHandler).Methods("GET")
+	a.API.Router.HandleFunc("/gecko/coin/{symbol}", a.Gecko.GetCoinHandler).Methods("GET")
+	a.API.Router.HandleFunc("/gecko/{symbol}/price", a.Gecko.GetSymbolPriceHandler).Methods("GET")
 
 }
-
-// func (g *GeckoApp) getSymbol(symbol string) (*geckoTypes.CoinsMarketItem, error) {
-
-// }
 
 func (g *GeckoApp) getSymbol(symbol string) (*geckoTypes.CoinsMarketItem, error) {
 	pcp := geckoTypes.PriceChangePercentageObject

@@ -17,17 +17,17 @@ type APIApp struct {
 }
 
 // mostly used for debugging right now
-func (a *App) InitializeRoutes() {
+func (a *App) initializeRoutes() {
 	a.API.Router = mux.NewRouter()
 	a.API.Router.HandleFunc("/test", TestHandler).Methods("GET")
-	a.API.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
-	a.API.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
+	// a.API.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
+	// a.API.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
 	a.API.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
 	a.API.Router.HandleFunc("/candles/ftx/{symbol}/{resolution}", a.GetSymbolCandlesHandler).Methods("GET").Queries("start", "{start}", "end", "{end}")
 	a.API.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalanceHandler).Methods("GET")
-	a.API.Router.HandleFunc("/gecko/{symbol}", a.GetSymbolHandler).Methods("GET")
-	a.API.Router.HandleFunc("/gecko/coin/{symbol}", a.GetCoinHandler).Methods("GET")
-	a.API.Router.HandleFunc("/gecko/{symbol}/price", a.GetSymbolPriceHandler).Methods("GET")
+	// a.API.Router.HandleFunc("/gecko/{symbol}", a.GetSymbolHandler).Methods("GET")
+	// a.API.Router.HandleFunc("/gecko/coin/{symbol}", a.GetCoinHandler).Methods("GET")
+	// a.API.Router.HandleFunc("/gecko/{symbol}/price", a.GetSymbolPriceHandler).Methods("GET")
 	http.Handle("/", a.API.Router)
 	a.API.Router.Use(loggingMiddleware)
 }
