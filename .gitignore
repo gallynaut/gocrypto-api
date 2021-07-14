@@ -3,3 +3,4 @@ bin
 config.yml
 *.sql
 vendor
+cache
