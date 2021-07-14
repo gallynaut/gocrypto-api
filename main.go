@@ -69,12 +69,7 @@ func main() {
 	}
 	a.initialize(a.cfg)
 
-	go a.Solana.requestAccountAirdrop(1000000000)
-
-	// poll FTX funding rates
-	go a.FTX.pollFundingRates(3600, a.ctx.Done())
-
-	go a.getGoogleTrends("solana")
+	// go a.getGoogleTrends("solana")
 
 	// go a.CW.getCandles()
 
@@ -105,10 +100,10 @@ func (a *App) initialize(config appConfig) {
 	a.initializeRoutes()
 
 	// intitialize data feeds
-	a.initializeCW(config.CW.PublicKey)
+	// a.initializeCW(config.CW.PublicKey)
 	a.initializeGecko()
-	a.initializeFTX(config.FTX.ApiKey, config.FTX.Secret)
+	// a.initializeFTX(config.FTX.ApiKey, config.FTX.Secret)
 
 	// solana keys, rpc, and websocket
-	a.initializeSolana(config.Solana.Network, config.Solana.PrivateKey)
+	// a.initializeSolana(config.Solana.Network, config.Solana.PrivateKey)
 }
