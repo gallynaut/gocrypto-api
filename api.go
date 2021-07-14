@@ -18,25 +18,27 @@ type APIApp struct {
 
 // mostly used for debugging right now
 func (a *App) initializeRoutes() {
-	a.API.Router = mux.NewRouter()
-	a.API.Router.HandleFunc("/test", TestHandler).Methods("GET")
-	// a.API.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
-	// a.API.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
-	a.API.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
-	a.API.Router.HandleFunc("/candles/ftx/{symbol}/{resolution}", a.GetSymbolCandlesHandler).Methods("GET").Queries("start", "{start}", "end", "{end}")
-	a.API.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalanceHandler).Methods("GET")
-	// a.API.Router.HandleFunc("/gecko/{symbol}", a.GetSymbolHandler).Methods("GET")
-	// a.API.Router.HandleFunc("/gecko/coin/{symbol}", a.GetCoinHandler).Methods("GET")
-	// a.API.Router.HandleFunc("/gecko/{symbol}/price", a.GetSymbolPriceHandler).Methods("GET")
-	http.Handle("/", a.API.Router)
-	a.API.Router.Use(loggingMiddleware)
+	a.Router = mux.NewRouter()
+	a.Router.HandleFunc("/test", TestHandler).Methods("GET")
+	a.Router.HandleFunc("/candles", TestHandler).Methods("GET")
+	// a.Router.HandleFunc("/exchanges", a.GetExchangeHandler).Methods("GET")
+	// a.Router.HandleFunc("/exchange", a.AddExchangeHandler).Methods("PUT")
+	a.Router.HandleFunc("/airdrop", a.RequestAirdropHandler).Methods("GET")
+	a.Router.HandleFunc("/candles/ftx/{symbol}/{resolution}", a.GetSymbolCandlesHandler).Methods("GET").Queries("start", "{start}", "end", "{end}")
+	a.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalanceHandler).Methods("GET")
+	a.Router.HandleFunc("/google/{keyword}", a.GetGoogleSearchTrends).Methods("GET")
+	// a.Router.HandleFunc("/gecko/{symbol}", a.GetSymbolHandler).Methods("GET")
+	// a.Router.HandleFunc("/gecko/coin/{symbol}", a.GetCoinHandler).Methods("GET")
+	// a.Router.HandleFunc("/gecko/{symbol}/price", a.GetSymbolPriceHandler).Methods("GET")
+	http.Handle("/", a.Router)
+	a.Router.Use(loggingMiddleware)
 }
 
-func (api *APIApp) Run(port uint, done <-chan struct{}) (err error) {
-	if port == 0 {
-		port = 8000
+func (a *App) RunAPI(done <-chan struct{}) (err error) {
+	if a.cfg.API.Port == 0 {
+		a.cfg.API.Port = 8000
 	}
-	addr := fmt.Sprintf("localhost:%d", port)
+	addr := fmt.Sprintf("localhost:%d", a.cfg.API.Port)
 
 	srv := &http.Server{
 		Addr: addr,
@@ -44,7 +46,7 @@ func (api *APIApp) Run(port uint, done <-chan struct{}) (err error) {
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      api.Router, // Pass our instance of gorilla/mux in.
+		Handler:      a.Router, // Pass our instance of gorilla/mux in.
 	}
 
 	go func() {

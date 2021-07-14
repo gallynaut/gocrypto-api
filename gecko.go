@@ -16,9 +16,9 @@ func (a *App) initializeGecko() {
 	a.Gecko.Client = coingecko.NewClient(nil)
 	log.Println("GEK: connected")
 
-	a.API.Router.HandleFunc("/gecko/{symbol}", a.Gecko.GetSymbolHandler).Methods("GET")
-	a.API.Router.HandleFunc("/gecko/coin/{symbol}", a.Gecko.GetCoinHandler).Methods("GET")
-	a.API.Router.HandleFunc("/gecko/{symbol}/price", a.Gecko.GetSymbolPriceHandler).Methods("GET")
+	a.Router.HandleFunc("/gecko/{symbol}", a.Gecko.GetSymbolHandler).Methods("GET")
+	a.Router.HandleFunc("/gecko/coin/{symbol}", a.Gecko.GetCoinHandler).Methods("GET")
+	a.Router.HandleFunc("/gecko/{symbol}/price", a.Gecko.GetSymbolPriceHandler).Methods("GET")
 
 }
 

@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -22,6 +23,7 @@ func InitializeDB(hostname, user, password, dbName string) StoreApp {
 	})
 	models := []interface{}{
 		(*Exchange)(nil),
+		(*OHLC)(nil),
 	}
 	log.Println("STORE: creating DB schemas")
 
@@ -35,4 +37,10 @@ func InitializeDB(hostname, user, password, dbName string) StoreApp {
 		}
 	}
 	return s
+}
+
+func GetCandle(db *pg.DB, exchangeSymbol string, pairSymbol string, period string, closeTime time.Time ) (*OHLC, error) {
+	var candle OHLC
+	_, err := db.QueryOne(&candle, `SELECT * FROM ohlcs WHERE exchange_symbol = ?, pair_symbol = ?, period = ?, close_time = ?`, exchangeSymbol, pairSymbol, period, closeTime)
+	return &candle, err
 }

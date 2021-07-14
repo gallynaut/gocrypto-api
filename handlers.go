@@ -117,3 +117,28 @@ func (g *GeckoApp) GetCoinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, http.StatusOK, coin)
 }
+
+func (a *App) GetOHLCHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	exchange := params["exchange"]
+	pair := params["pair"]
+	resp, err := a.GetOHLC(&CWOHLCRequest{
+		ExchangeSymbol: exchange,
+		PairSymbol:     pair,
+		// Periods:        []string{"60", "3600", "86400"},
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error : %s", err))
+	}
+	respondWithJSON(w, http.StatusOK, resp)
+}
+
+func (a *App) GetGoogleSearchTrends(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	keyword := params["keyword"]
+	t, err := a.getGoogleTrends(keyword)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error getting acct balance: %s", err))
+	}
+	respondWithJSON(w, http.StatusOK, t)
+}

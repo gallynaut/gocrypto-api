@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/gallynaut/gocrypto-api/store"
+	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 )
 
@@ -32,16 +33,18 @@ type appConfig struct {
 	CW struct {
 		PublicKey string `json:"pubKey" mapstructure:"pubKey"`
 		Secret    string `json:"secret" mapstructure:"secret"`
+		URL       string `json:"url" mapstructure:"url"`
 	} `json:"cryptoWatch" mapstructure:"cryptoWatch"`
 }
 
 type App struct {
-	API    APIApp
+	Router *mux.Router
 	Store  store.StoreApp
 	Solana SolanaApp
 	FTX    FTXApp
 	Gecko  GeckoApp
 	CW     CWApp
+	cfg    appConfig
 	ctx    context.Context
 }
 
@@ -59,23 +62,24 @@ func main() {
 		cancel()
 	}()
 
-	config, err := loadConfig("config.yml")
+	var err error
+	a.cfg, err = loadConfig("config.yml")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
-	a.initialize(config)
-	defer a.Solana.WS.Close()
+	a.initialize(a.cfg)
 
 	go a.Solana.requestAccountAirdrop(1000000000)
 
-	// poll solana account balances and wait for blocks
-	go a.Solana.subscribeAccount(a.ctx.Done())
-
 	// poll FTX funding rates
-	go a.FTX.pollFundingRates(45, a.ctx.Done())
+	go a.FTX.pollFundingRates(3600, a.ctx.Done())
+
+	go a.getGoogleTrends("solana")
+
+	// go a.CW.getCandles()
 
 	// start api
-	a.API.Run(config.API.Port, a.ctx.Done())
+	a.RunAPI(a.ctx.Done())
 
 	log.Println("shutting down")
 	os.Exit(0)
@@ -97,7 +101,7 @@ func loadConfig(path string) (config appConfig, err error) {
 
 func (a *App) initialize(config appConfig) {
 	// database and api routes
-	a.Store = store.InitializeDB(config.DB.Hostname, config.DB.Username, config.DB.Password, config.DB.DBName)
+	// a.Store = store.InitializeDB(config.DB.Hostname, config.DB.Username, config.DB.Password, config.DB.DBName)
 	a.initializeRoutes()
 
 	// intitialize data feeds
