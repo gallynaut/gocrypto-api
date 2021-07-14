@@ -27,10 +27,8 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/candles/ftx/{symbol}/{resolution}", a.GetSymbolCandlesHandler).Methods("GET").Queries("start", "{start}", "end", "{end}")
 	a.Router.HandleFunc("/solana/balance", a.GetSolanaAccountBalanceHandler).Methods("GET")
 	a.Router.HandleFunc("/google/{keyword}", a.GetGoogleSearchTrends).Methods("GET")
-	// a.Router.HandleFunc("/gecko/{symbol}", a.GetSymbolHandler).Methods("GET")
-	// a.Router.HandleFunc("/gecko/coin/{symbol}", a.GetCoinHandler).Methods("GET")
-	// a.Router.HandleFunc("/gecko/{symbol}/price", a.GetSymbolPriceHandler).Methods("GET")
 	http.Handle("/", a.Router)
+	a.Router.Use(mux.CORSMethodMiddleware(a.Router))
 	a.Router.Use(loggingMiddleware)
 }
 
@@ -86,9 +84,13 @@ func loggingMiddleware(next http.Handler) http.Handler {
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
+	if code == http.StatusOK {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write(response)
+	} else {
+		w.WriteHeader(code)
+	}	
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
